@@ -1,0 +1,39 @@
+# Python artifacts
+*.pyc
+*.pyo
+*.egg-info/
+__pycache__/
+
+# Virtual environment
+.venv/
+.env
+venv/
+
+# Django specific
+*.log
+*.pot
+*.db
+*.sqlite3
+*.sqlite3-journal
+media/
+
+# If you don't want to include migration files
+# */migrations/*.py
+# Note: Consider commenting this out if you're working with a team and wish to share migration files
+
+# Static files
+static/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDE-specific
+.idea/
+*.swp
+*.swo
+*.swn
+.vscode/
+
+# Other
+*.bak
