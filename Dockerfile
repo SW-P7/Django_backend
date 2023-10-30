@@ -8,5 +8,5 @@ WORKDIR /code
 
 EXPOSE 8000
 
-ENTRYPOINT ["python", "webapp/webapp/manage.py"]
+#ENTRYPOINT ["python", "webapp/webapp/manage.py"]
 CMD ["runserver", "0.0.0.0:8000"]

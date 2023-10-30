@@ -37,6 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # rest framework
+    'rest_framework',
+
+    # custom apps
+    'webapp.minions',
+    'webapp.states'
 ]
 
 MIDDLEWARE = [
@@ -73,12 +80,19 @@ WSGI_APPLICATION = 'webapp.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import os
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'db',
+        'USER': 'username',
+        'PASSWORD': 'password',
+        'HOST': 'db',  
+        'PORT': '5432',
     }
 }
+
 
 
 # Password validation
