@@ -5,15 +5,19 @@ services:
     build: .
     volumes:
       - /home/martinmortensen/Documents/AAU/7. Semester/Project/backend_code/webapp:/app/data
+      - .:/code:default
+
     ports:
       - "8000:8000"
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py makemigrations states &&
+             python manage.py makemigrations minions &&
+             python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://username:password@db:5432/dbname
+      - DATABASE_URL=postgres://username:password@db:5432/db
   db:
     image: postgres:latest 
     environment:
