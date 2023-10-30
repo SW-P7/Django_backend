@@ -1,7 +1,7 @@
 Prerequisites
 
     Python 3.x
-    Docker (if you're using Docker for deployment)
+    Docker
 
 Setting Up the Project
 
