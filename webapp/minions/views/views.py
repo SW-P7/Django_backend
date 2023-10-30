@@ -1,5 +1,7 @@
-from rest_framework import routers, serializers, viewsets
+from webapp.minions.models import *
 
 
-class DeviceAdmin():
+
+
+class DeviceAdmin(Device):
     a = 2
