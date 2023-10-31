@@ -1,11 +1,23 @@
+from typing import Any
 from django.db import models
-
+import uuid
 
 class Device(models.Model):
-    id = models.UUIDField(name='id', null=False, unique=True, primary_key=True)
-    software_version = models.FloatField(name='software version', null=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    software_version = models.CharField(max_length=10, null=True, blank=True)
+    name = models.CharField(max_length=50, null=True)
+    ip_addr = models.GenericIPAddressField(null=True)
+
+    class Meta:
+        verbose_name = "device"
+        verbose_name_plural = "devices"
+
     
 class UpdateLogs(models.Model):
     id = models.UUIDField(name='id', null=False, unique=True, primary_key=True)
     device = models.ManyToOneRel(field=Device.id ,to=Device,field_name='id' ,on_delete=models.PROTECT)
     log = models.CharField( name='update log', null=False)
+    
+    class Meta:
+        verbose_name = "updatelog"
+        verbose_name_plural = "updatelogs"

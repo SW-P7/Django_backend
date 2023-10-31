@@ -17,14 +17,16 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://username:password@db:5432/db
+      - DATABASE_URL=postgres://postgres:password@db:5432/db
   db:
-    image: postgres:latest 
-    environment:
-      - POSTGRES_DB=db
-      - POSTGRES_USER=username
-      - POSTGRES_PASSWORD=password
+    image: postgres
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - /home/martinmortensen/Documents/webapp/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+volumes:
+  postgres_data:
 
       

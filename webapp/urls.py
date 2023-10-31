@@ -15,8 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from webapp.minions.minion_apis import urls as minion_api_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api-auth/', include('rest_framework.urls')),
+    #path('states/', include(state_urls)),
+    path('api/', include(minion_api_urls)),
+    #path('device_apis/', include(minion_api_urls))
 ]
