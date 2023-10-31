@@ -9,3 +9,8 @@ class MinionListCreate(generics.ListCreateAPIView):
 class MinionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+    
+class DeviceLookupView(generics.RetrieveAPIView):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    lookup_field = 'name'
