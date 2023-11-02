@@ -18,4 +18,3 @@ class DeviceLookupView(generics.RetrieveAPIView):
         device = Device.objects.filter(id=id).first()
         serializer_class = DeviceSerializer(device) 
         return Response(serializer_class.data, status=200)
-   
