@@ -16,15 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from webapp.minions.minion_apis.views import router
-from webapp.states.state_apis.views import router
+from webapp.minions.minion_apis.views import router as minion_router
+from webapp.states.state_apis.views import router as state_router
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     #path('states/', include(state_urls)),
-    path('api/', include(router.urls)),
-    path('api/', include(router.urls)),
+    path('api/', include(minion_router.urls)),
+    path('api/', include(state_router.urls)),
     #path('device_apis/', include(minion_api_urls))
 ]

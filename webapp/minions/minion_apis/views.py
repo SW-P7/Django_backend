@@ -7,6 +7,7 @@ from rest_framework import generics, viewsets, mixins
 from webapp.decorators import register_viewset
 from webapp.minions.models import Device
 from webapp.minions.minion_apis.serializers import DeviceSerializer
+from rest_framework.decorators import action
 
 
 
@@ -23,6 +24,15 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
     #def         
     queryset = Device.objects.all()
 
+    @action(detail=True, methods=['get'], url_path='get_status')
+    def get_status(self, request, pk=None):
+        # Your logic to get ping for the specified device
+        # Replace the following line with your actual logic
+        device = self.get_object()
+        ping_result = f"Ping for device {device.name}"
+
+        return Response({'ping': ping_result})
+    
 
 
 # class MinionListCreate(generics.ListCreateAPIView):

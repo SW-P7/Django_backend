@@ -7,6 +7,8 @@ class Device(models.Model):
     software_version = models.CharField(max_length=10, null=True, blank=True)
     name = models.CharField(max_length=50, null=True)
     ip_addr = models.GenericIPAddressField(null=True)
+    ping = models.IntegerField(null=True)
+    last_online = models.DateTimeField(null=True)
 
     class Meta:
         verbose_name = "device"
