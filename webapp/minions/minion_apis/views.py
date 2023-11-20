@@ -9,10 +9,10 @@ from webapp.minions.models import Device
 from webapp.minions.minion_apis.serializers import DeviceSerializer
 from rest_framework.decorators import action
 
-
+import socket
+import time
 
 router = DefaultRouter()
-
 
 @register_viewset(router=router, prefix='devices', basename='device')
 class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
@@ -29,11 +29,30 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         # Your logic to get ping for the specified device
         # Replace the following line with your actual logic
         device = self.get_object()
-        ping_result = f"Ping for device {device.name}"
-
+        ping_result = ping_device(device.ip_addr)
         return Response({'ping': ping_result})
-    
 
+def ping_device(host: str):
+    host = '172.17.0.1'
+    port = 5000  # socket server port number
+
+    client_socket = socket.socket()  # instantiate
+    client_socket.connect((host, port))  # connect to the server
+
+    message = "ping"
+    data = ""
+    time_before = time.time()
+    
+    while data != 'pong':
+        client_socket.send(message.encode())  # send message
+        data = client_socket.recv(1024).decode()  # receive response
+    
+    time_after = time.time()
+    client_socket.close()  # close the connection
+    
+    ping = round((time_after - time_before) * 1000)
+    
+    return ping
 
 # class MinionListCreate(generics.ListCreateAPIView):
     # queryset = Device.objects.all()

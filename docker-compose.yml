@@ -18,6 +18,8 @@ services:
       - db
     environment:
       - DATABASE_URL=postgres://postgres:password@db:5432/db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   db:
     image: postgres
     volumes:
