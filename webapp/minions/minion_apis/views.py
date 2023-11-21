@@ -6,8 +6,9 @@ from rest_framework import generics, viewsets, mixins
 
 from webapp.decorators import register_viewset
 from webapp.minions.models import Device
-from webapp.minions.minion_apis.serializers import DeviceSerializer
+from webapp.minions.minion_apis.serializers import DeviceSerializer, PingSerializer
 from rest_framework.decorators import action
+from django.http import HttpResponse
 
 import socket
 import time
@@ -29,10 +30,12 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         # Your logic to get ping for the specified device
         # Replace the following line with your actual logic
         device = self.get_object()
-        ping_result = ping_device(device.ip_addr)
-        return Response({'ping': ping_result})
+        if ping_device(device):
+            data = PingSerializer(device).data
+            return Response(data, status=200)
+        return Response(status = 500)
 
-def ping_device(host: str):
+def ping_device(device):
     host = '172.17.0.1'
     port = 5000  # socket server port number
 
@@ -43,16 +46,28 @@ def ping_device(host: str):
     data = ""
     time_before = time.time()
     
-    while data != 'pong':
-        client_socket.send(message.encode())  # send message
+    while data != 'done':
+        client_socket.sendall(message.encode())  # send message
         data = client_socket.recv(1024).decode()  # receive response
-    
-    time_after = time.time()
+        if data == "pong":
+            time_after = time.time()
+            message = "recieved"
+        if data == "version?" and device.software_version != None:
+            message = device.software_version
+        if data == "version?" and device.software_version == None:
+            message = "1.0.0"
+        if data == "version!":
+            client_socket.sendall(str.encode("ready"))
+            version = client_socket.recv(1024).decode()
+            device.software_version = version
+            message = "done"
     client_socket.close()  # close the connection
     
     ping = round((time_after - time_before) * 1000)
-    
-    return ping
+    device.ping = ping
+    device.save()
+
+    return True
 
 # class MinionListCreate(generics.ListCreateAPIView):
     # queryset = Device.objects.all()
