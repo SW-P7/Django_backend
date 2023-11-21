@@ -33,7 +33,7 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         if ping_device(device):
             data = PingSerializer(device).data
             return Response(data, status=200)
-        return HttpResponse(status = 500)
+        return Response(status = 500)
 
 def ping_device(device):
     host = '172.17.0.1'
