@@ -12,6 +12,7 @@ from django.http import HttpResponse
 
 import socket
 import time
+import http.client
 
 router = DefaultRouter()
 
@@ -36,6 +37,20 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         return Response(status = 500)
 
 def ping_device(device):
+    host = '172.17.0.1'
+    port = 5000  # socket server port number
+    conn = http.client.HTTPConnection(host, port)
+    time_before = time.time()
+    conn.request("GET", "/ping", headers={"Host": host})
+    response = conn.getresponse()
+    ping = round((time.time() - time_before) * 1000)
+    device.ping = ping
+    device.save()
+
+    print(response.code, response.reason)
+    return True
+
+def tcp_ping_device(device):
     host = '172.17.0.1'
     port = 5000  # socket server port number
 
