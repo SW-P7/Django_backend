@@ -9,10 +9,13 @@ from webapp.minions.models import Device
 from webapp.minions.minion_apis.serializers import DeviceSerializer, PingSerializer
 from rest_framework.decorators import action
 from django.http import HttpResponse
+from django.utils import timezone
 
 import socket
 import time
 import http.client
+import datetime
+
 
 router = DefaultRouter()
 
@@ -36,18 +39,16 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             return Response(data, status=200)
         return Response(status = 500)
 
-def ping_device(device):
-    host = '172.17.0.1'
-    port = 5000  # socket server port number
-    conn = http.client.HTTPConnection(host, port)
+def ping_device(device: Device):
+    conn = http.client.HTTPConnection(device.ip_addr, 5000)
     time_before = time.time()
-    conn.request("GET", "/ping", headers={"Host": host})
+    conn.request("GET", "/ping", headers={"Host": device.ip_addr})
     response = conn.getresponse()
     ping = round((time.time() - time_before) * 1000)
+    device.last_online = timezone.now()
     device.ping = ping
     device.save()
 
-    print(response.code, response.reason)
     return True
 
 def tcp_ping_device(device):
