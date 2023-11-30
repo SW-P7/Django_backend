@@ -43,13 +43,13 @@ def ping_device(device: Device):
     conn = http.client.HTTPConnection(device.ip_addr, 5000)
     time_before = time.time()
     conn.request("GET", "/ping", headers={"Host": device.ip_addr})
-    response = conn.getresponse()
     ping = round((time.time() - time_before) * 1000)
-    device.last_online = timezone.now()
-    device.ping = ping
-    device.save()
-
-    return True
+    if conn.getresponse().getcode() == 200:
+        device.last_online = timezone.now()
+        device.ping = ping
+        device.save()
+        return True
+    return False
 
 def tcp_ping_device(device):
     host = '172.17.0.1'
