@@ -74,6 +74,12 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'webapp.states.state_apis.serializers': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+
     },
 }
 
