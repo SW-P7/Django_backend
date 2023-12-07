@@ -27,7 +27,6 @@ router = DefaultRouter()
 class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
     def get_serializer_class(self):
         if self.action == 'send_update':
-            logger.debug("send_update used")
             return UpdateSerializer
         else:
             return DeviceSerializer
@@ -55,26 +54,34 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         device_id = serializer.validated_data['device_id']
 
         device = Device.objects.get(id=device_id)
-        conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
         update = SoftwareState.objects.get(id=update_id)
-        conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
-        if conn.getresponse().getcode() == 200:
-            logger.info(f"success update request to device {device_id} with update {update_id}")
-            return Response("success", status=status.HTTP_200_OK)
-        else:
-            logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
-            return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
+
+        try:
+            conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
+            conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
+            if conn.getresponse().getcode() == 200:
+                logger.info(f"success update request to device {device_id} with update {update_id}")
+                return Response("success", status=status.HTTP_200_OK)
+            else:
+                logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
+                return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
+
+        except Exception as e:
+            return Response(e, status=status.HTTP_504_GATEWAY_TIMEOUT)
 
 def ping_device(device: Device):
     conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
     time_before = time.time()
-    conn.request("GET", "/ping", headers={"Host": device.ip_addr})
-    ping = round((time.time() - time_before) * 1000)
-    if conn.getresponse().getcode() == 200:
-        device.last_online = timezone.now()
-        device.ping = ping
-        device.save()
-        return True
+    try:
+        conn.request("GET", "/ping", headers={"Host": device.ip_addr})
+        ping = round((time.time() - time_before) * 1000)
+        if conn.getresponse().getcode() == 200:
+            device.last_online = timezone.now()
+            device.ping = ping
+            device.save()
+            return True
+    except Exception:
+        return False
     return False
 
 def tcp_ping_device(device):
