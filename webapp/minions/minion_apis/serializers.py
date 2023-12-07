@@ -12,3 +12,8 @@ class PingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         fields = ['ping', 'software_version']
+
+
+class UpdateSerializer(serializers.Serializer):
+    update_id = serializers.UUIDField()
+    device_id = serializers.UUIDField()   

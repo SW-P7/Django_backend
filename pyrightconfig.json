@@ -1,0 +1,4 @@
+{
+    "venvPath": "./.venv/bin/",
+    "venv": "python3.10"
+}
