@@ -27,6 +27,7 @@ router = DefaultRouter()
 class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
     def get_serializer_class(self):
         if self.action == 'send_update':
+            logger.debug("send_update used")
             return UpdateSerializer
         else:
             return DeviceSerializer
@@ -48,21 +49,24 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         serializer = UpdateSerializer(data=request.data)
         logger.debug(f"MARTINLOG::: {request.data}")
         if not serializer.is_valid():
+            logger.warning("data is not valid UUID")
             return Response(f"{request.data}", status=status.HTTP_400_BAD_REQUEST)
         update_id = serializer.validated_data['update_id']
         device_id = serializer.validated_data['device_id']
 
         device = Device.objects.get(id=device_id)
-        conn = http.client.HTTPConnection(device.ip_addr, 5000)
+        conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
         update = SoftwareState.objects.get(id=update_id)
         conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
         if conn.getresponse().getcode() == 200:
+            logger.info(f"success update request to device {device_id} with update {update_id}")
             return Response("success", status=status.HTTP_200_OK)
         else:
-            return Response("success", status=status.HTTP_418_IM_A_TEAPOT)   
+            logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
+            return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
 
 def ping_device(device: Device):
-    conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=1)
+    conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
     time_before = time.time()
     conn.request("GET", "/ping", headers={"Host": device.ip_addr})
     ping = round((time.time() - time_before) * 1000)
