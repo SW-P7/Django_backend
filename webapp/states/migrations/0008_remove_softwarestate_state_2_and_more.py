@@ -6,14 +6,11 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('states', '0007_alter_softwarestate_state'),
+        ("states", "0005_alter_softwarestate_state")
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='softwarestate',
-            name='state_2',
-        ),
+       
         migrations.AlterField(
             model_name='softwarestate',
             name='state',
