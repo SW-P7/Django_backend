@@ -3,6 +3,7 @@ from uuid import UUID
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 from rest_framework import generics, viewsets, mixins, request, status
+from webapp.states.models import Update
 
 from webapp.decorators import register_viewset
 from webapp.minions.models import Device
@@ -53,19 +54,34 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         update_id = serializer.validated_data['update_id']
         device_id = serializer.validated_data['device_id']
 
-        device = Device.objects.get(id=device_id)
-        update = SoftwareState.objects.get(id=update_id)
-
+        #device = Device.objects.get(id=device_id)
+        #update = SoftwareState.objects.get(id=update_id)
+        update_dict = {}
         try:
-            conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
-            conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
-            if conn.getresponse().getcode() == 200:
-                logger.info(f"success update request to device {device_id} with update {update_id}")
-                return Response("success", status=status.HTTP_200_OK)
-            else:
-                logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
-                return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
+            for id in device_id:
+                device = Device.objects.get(id=id)
+                conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
+                for uid in update_id:
+                    update = SoftwareState.objects.get(id=uid)
+                    conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
+                    if conn.getresponse().getcode() == 200:
+                        logger.info(f"success update request to device {device_id} with update {update_id}")
+                        if "success" not in update_dict:
+                            update_dict.update({"success": [{device_id : update_id}]})
+                            Update.objects.create(id=UUID.uuid(), device=id, softwarestate=uid)
+                        else:
+                            Update.objects.create(id=UUID.uuid(), device=id, softwarestate=uid) 
+                            update_dict["success"].append({device_id : update_id})
+                        #return Response("success", status=status.HTTP_200_OK)
+                    else:
+                        logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
+                        if "failure" not in update_dict:
+                            update_dict.update({"failure": [{device_id : update_id}]})
+                        else:
+                            update_dict["failure"].append({device_id : update_id})
 
+                        #return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
+            return Response(str(update_dict), status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_504_GATEWAY_TIMEOUT)
 

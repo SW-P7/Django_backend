@@ -1,5 +1,7 @@
 from rest_framework import serializers
+#from rest_framework.fields import ListField
 from ..models import Device
+from drf_compound_fields.fields import ListField 
 
 class DeviceSerializer(serializers.ModelSerializer):
 
@@ -15,5 +17,5 @@ class PingSerializer(serializers.ModelSerializer):
 
 
 class UpdateSerializer(serializers.Serializer):
-    update_id = serializers.UUIDField()
-    device_id = serializers.UUIDField()   
+    update_id_list = ListField(child=serializers.UUIDField())
+    device_id_list= ListField(child=serializers.UUIDField())   
