@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
@@ -51,8 +51,8 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         if not serializer.is_valid():
             logger.warning("data is not valid UUID")
             return Response(f"{request.data}", status=status.HTTP_400_BAD_REQUEST)
-        update_id = serializer.validated_data['update_id']
-        device_id = serializer.validated_data['device_id']
+        update_id = serializer.validated_data['update_id_list']
+        device_id = serializer.validated_data['device_id_list']
 
         #device = Device.objects.get(id=device_id)
         #update = SoftwareState.objects.get(id=update_id)
@@ -61,29 +61,31 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             for id in device_id:
                 device = Device.objects.get(id=id)
                 conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
+                logger.debug(device.ip_addr)
                 for uid in update_id:
                     update = SoftwareState.objects.get(id=uid)
                     conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
                     if conn.getresponse().getcode() == 200:
                         logger.info(f"success update request to device {device_id} with update {update_id}")
                         if "success" not in update_dict:
-                            update_dict.update({"success": [{device_id : update_id}]})
-                            Update.objects.create(id=UUID.uuid(), device=id, softwarestate=uid)
+                            update_dict.update({"success": [{id : uid}]})
+                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get())
                         else:
-                            Update.objects.create(id=UUID.uuid(), device=id, softwarestate=uid) 
-                            update_dict["success"].append({device_id : update_id})
+                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get()) 
+                            update_dict["success"].append({id : uid})
                         #return Response("success", status=status.HTTP_200_OK)
                     else:
                         logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
                         if "failure" not in update_dict:
-                            update_dict.update({"failure": [{device_id : update_id}]})
+                            update_dict.update({"failure": [{id : uid}]})
                         else:
-                            update_dict["failure"].append({device_id : update_id})
+                            update_dict["failure"].append({id : uid})
 
                         #return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
             return Response(str(update_dict), status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(e, status=status.HTTP_504_GATEWAY_TIMEOUT)
+            raise e
+            return Response(e.__str__(), status=status.HTTP_504_GATEWAY_TIMEOUT)
 
 def ping_device(device: Device):
     conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
