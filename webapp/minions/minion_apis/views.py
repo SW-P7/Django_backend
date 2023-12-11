@@ -1,12 +1,14 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
-from rest_framework import generics, viewsets, mixins
+from rest_framework import generics, viewsets, mixins, request, status
+from webapp.states.models import Update
 
 from webapp.decorators import register_viewset
 from webapp.minions.models import Device
-from webapp.minions.minion_apis.serializers import DeviceSerializer, PingSerializer
+from webapp.states.models import SoftwareState
+from webapp.minions.minion_apis.serializers import DeviceSerializer, PingSerializer, UpdateSerializer
 from rest_framework.decorators import action
 from django.http import HttpResponse
 from django.utils import timezone
@@ -16,14 +18,17 @@ import time
 import http.client
 import datetime
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = DefaultRouter()
 
 @register_viewset(router=router, prefix='devices', basename='device')
 class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
     def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return DeviceSerializer
+        if self.action == 'send_update':
+            return UpdateSerializer
         else:
             return DeviceSerializer
     #def         
@@ -39,16 +44,62 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             return Response(data, status=200)
         return Response(status = 500)
 
+    @action(detail=True, methods=['post'], url_path='send_update', serializer_class=UpdateSerializer)
+    def send_update(self, request, pk=None):        
+        serializer = UpdateSerializer(data=request.data)
+        logger.debug(f"MARTINLOG::: {request.data}")
+        if not serializer.is_valid():
+            logger.warning("data is not valid UUID")
+            return Response(f"{request.data}", status=status.HTTP_400_BAD_REQUEST)
+        update_id = serializer.validated_data['update_id_list']
+        device_id = serializer.validated_data['device_id_list']
+
+        #device = Device.objects.get(id=device_id)
+        #update = SoftwareState.objects.get(id=update_id)
+        update_dict = {}
+        try:
+            for id in device_id:
+                device = Device.objects.get(id=id)
+                conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
+                logger.debug(device.ip_addr)
+                for uid in update_id:
+                    update = SoftwareState.objects.get(id=uid)
+                    conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr})
+                    if conn.getresponse().getcode() == 200:
+                        logger.info(f"success update request to device {device_id} with update {update_id}")
+                        if "success" not in update_dict:
+                            update_dict.update({"success": [{id : uid}]})
+                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get())
+                        else:
+                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get()) 
+                            update_dict["success"].append({id : uid})
+                        #return Response("success", status=status.HTTP_200_OK)
+                    else:
+                        logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
+                        if "failure" not in update_dict:
+                            update_dict.update({"failure": [{id : uid}]})
+                        else:
+                            update_dict["failure"].append({id : uid})
+
+                        #return Response("Error in updating device", status=status.HTTP_418_IM_A_TEAPOT)   
+            return Response(str(update_dict), status=status.HTTP_200_OK)
+        except Exception as e:
+            raise e
+            return Response(e.__str__(), status=status.HTTP_504_GATEWAY_TIMEOUT)
+
 def ping_device(device: Device):
-    conn = http.client.HTTPConnection(device.ip_addr, 5000)
+    conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
     time_before = time.time()
-    conn.request("GET", "/ping", headers={"Host": device.ip_addr})
-    ping = round((time.time() - time_before) * 1000)
-    if conn.getresponse().getcode() == 200:
-        device.last_online = timezone.now()
-        device.ping = ping
-        device.save()
-        return True
+    try:
+        conn.request("GET", "/ping", headers={"Host": device.ip_addr})
+        ping = round((time.time() - time_before) * 1000)
+        if conn.getresponse().getcode() == 200:
+            device.last_online = timezone.now()
+            device.ping = ping
+            device.save()
+            return True
+    except Exception:
+        return False
     return False
 
 def tcp_ping_device(device):
@@ -78,7 +129,7 @@ def tcp_ping_device(device):
             device.software_version = version
             message = "done"
     client_socket.close()  # close the connection
-    
+     
     ping = round((time_after - time_before) * 1000)
     device.ping = ping
     device.save()

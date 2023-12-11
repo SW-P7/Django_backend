@@ -69,6 +69,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'webapp.wsgi.application'
 
+LOGGING = {
+    "handlers":{
+        'console':{
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    "formatters": {
+        "verbose": {
+            "format": "{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "loggers": {
+        'webapp.minions.minion_apis.views': {
+            'handlers':['console'],
+            'level': ['DEBUG']
+
+        }
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#
