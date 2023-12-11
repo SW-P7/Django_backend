@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import SoftwareState
+from ..models import SoftwareState, Update
 import yaml
 import logging
 import json
@@ -25,3 +25,9 @@ class StateSerializer(serializers.ModelSerializer):
         #state = json.dumps(state)
         return state
 
+
+class UpdateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Update
+        fields = '__all__'
