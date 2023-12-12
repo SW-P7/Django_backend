@@ -1,19 +1,24 @@
+from sys import exception
 from uuid import UUID, uuid4
 
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 from rest_framework import generics, viewsets, mixins, request, status
 from rest_framework.schemas.coreapi import serializers
+from minions import ftp_conn
+from minions.models import UpdateLogs
 from webapp.states.models import Update
 
 from webapp.decorators import register_viewset
 from webapp.minions.models import Device
 from webapp.states.models import SoftwareState
+from webapp.minions.ftp_conn import FtpConn 
 from webapp.minions.minion_apis.serializers import DeviceSerializer, PingSerializer, UpdateSerializer, UpdateLogSerializer
 from rest_framework.decorators import action
 from django.http import HttpResponse
 from django.utils import timezone
 from ftplib import FTP
+import random
 
 import socket
 import time
@@ -110,7 +115,22 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         
         logs : list = logs_non_split.split(".log:")
         #Implement FTP Server Connection here :)
-
+        files_dict = {}
+        i : int = 0
+        for log in logs:
+            log_location = f'/home/{device_id}/{random.randint(0, 5000)}'
+            files_dict.update({i : [f'/home/{device_id}/{random.randint(0, 5000)}', log]})
+            try:
+                success = FtpConn.upload_file_ftp(log_location, file=log)
+            except Exception as e:
+                #handling exceptions
+                success = False
+                pass 
+            if success:
+                log = UpdateLogs.objects.create(device=device, log_location=log_location, name=f'{device.name}{str(datetime.datetime.now())}')
+                log.save()
+            i += 1
+        
 
 
 def ping_device(device: Device):

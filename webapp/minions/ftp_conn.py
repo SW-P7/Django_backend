@@ -1,11 +1,12 @@
 import ftplib
 import io
+from typing import Dict
 
 
 class FtpConn:
     
     #Imagine this being dynamic  
-    FTP_HOST = "http://localhost:21"
+    FTP_HOST = "172.23.0.1:21"
     FTP_USER = "user"
     FTP_PASS = "pass"
 
@@ -31,8 +32,14 @@ class FtpConn:
             with open(local_file_path, 'wb') as file:
                 ftp.retrbinary(f'RETR {remote_file_path}', file.write)
 
-    def upload_many_ftp(self):
-        pass
+    def upload_many_ftp(self, files : Dict[str, str]):
+        success_dict : dict = {}
+        for k, v in files.items():
+            success = self.upload_file_ftp(remote_filepath=v[0], file=v[1])
+            success_dict.update({k : success})
+        return success_dict
+            
+         
 
     def download_many_ftp(self):
         pass
