@@ -27,7 +27,7 @@ class FtpConn:
                 pass
         return True
         
-    def download_file_ftp(self, local_file_path, remote_file_path):
+    def download_file_ftp(self, local_file_path, remote_file_path): 
         with ftplib.FTP(self.FTP_HOST, self.FTP_USER, self.FTP_PASS) as ftp:
             with open(local_file_path, 'wb') as file:
                 ftp.retrbinary(f'RETR {remote_file_path}', file.write)

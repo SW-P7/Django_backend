@@ -87,8 +87,31 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             return Response(str(update_dict), status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e.__str__(), status=status.HTTP_504_GATEWAY_TIMEOUT)
+    
+    @action(detail=True, methods=['get'], url_path='logs', serializer_class=None)
+    def get_logs(self, request, pk=None):
+        serializer = UpdateLogSerializer(data=request.data)
+        if not serializer.is_valid():
+           logger.info("incorrect device_id")
+           return Response("incorrect device_id", status=status.HTTP_400_BAD_REQUEST)
+        
+        device_id = serializer.validated_data['device_id']
+        device = Device.objects.filter(id=device_id).first()
+        upload_logs = UpdateLogs.filter(device=device)
+        return Response(data=upload_logs, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get'], url_path='logs', serializer_class=None) 
+    def get_log(self, request, pk=None):
+        serializer = UpdateLogFtpSerializer(data=request.data)
+        if not serializer.is_valid():
+            logger.info("incorrect update_log id")
+            return Response("Incorrect update_log id", status=status.HTTP_400_BAD_REQUEST)
+        id = serializer.validated_data['id']
+        update_log = UpdateLogs.objects.get(id=id)
+        try:
+            FtpConn.download_file_ftp(f'{update_log.name}log', update_log.log_location)
+        except Exception:
+            return 
+    @action(detail=True, methods=['post'], url_path='logs', serializer_class=None) 
     def upload_create_logs(self, request, pk=None):
         serializer = UpdateLogSerializer(data=request.data)
         if not serializer.is_valid():
