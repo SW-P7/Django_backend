@@ -1,5 +1,4 @@
-from os import stat
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
@@ -36,7 +35,6 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             return UpdateSerializer
         else:
             return DeviceSerializer
-    #def         
     queryset = Device.objects.all()
 
     @action(detail=True, methods=['get'], url_path='get_status')
