@@ -12,6 +12,7 @@ WORKDIR /app
 COPY webapp/requirements.txt /app/
 
 # Install dependencies
+RUN apt-get update && apt-get install -y iproute2
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the entire project directory into the container
