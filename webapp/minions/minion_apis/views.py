@@ -59,10 +59,10 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         device_id = serializer.validated_data['device_id_list']
 
         update_dict = {}
-        try:
-            for id in device_id:
-                device = Device.objects.get(id=id)
-                conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=2)
+        for id in device_id:
+            device = Device.objects.get(id=id)
+            try:
+                conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
                 logger.debug(device.ip_addr)
                 for uid in update_id:
                     update = SoftwareState.objects.get(id=uid)
@@ -75,16 +75,18 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
                         else:
                             Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get()) 
                             update_dict["success"].append({id : uid})
-                        #return Response("success", status=status.HTTP_200_OK)
                     else:
                         logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
                         if "failure" not in update_dict:
                             update_dict.update({"failure": [{id : uid}]})
                         else:
                             update_dict["failure"].append({id : uid})
-            return Response(str(update_dict), status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response(e.__str__(), status=status.HTTP_504_GATEWAY_TIMEOUT)
+            except Exception as e:
+                return Response(e.__str__(), status=status.HTTP_504_GATEWAY_TIMEOUT)
+            finally:
+                conn.close()
+        return Response(str(update_dict), status=status.HTTP_200_OK)
+
     
     @action(detail=True, methods=['get'], url_path='logs', serializer_class=None)
     def get_logs(self, request, pk=None):
@@ -131,7 +133,7 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         device_id = serializer.validated_data['device_id']
         device = Device.objects.filter(id=device_id).first()
         if device is None:
-            raise Exception("device not found")
+            return Response("device not found", status=status.HTTP_404_NOT_FOUND)
         logs_non_split = ""
         
         try:
@@ -181,6 +183,8 @@ def ping_device(device: Device):
             return True
     except Exception:
         return False
+    finally:
+        conn.close()
     return False
 
 def tcp_ping_device(device):
