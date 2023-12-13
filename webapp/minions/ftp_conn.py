@@ -35,12 +35,19 @@ class FtpConn:
             logger.debug(f"upload_file_ftp error: {str(e)}")
             return False
         logger.debug("Successfully stored file on FTP server")
-        return True       
-    def download_file_ftp(self, local_file_path, remote_file_path): 
-        with ftplib.FTP(self.FTP_HOST, self.FTP_USER, self.FTP_PASS) as ftp:
-            with open(local_file_path, 'wb') as file:
-                ftp.retrbinary(f'RETR {remote_file_path}', file.write)
+        return True      
 
+    def download_file_ftp(self, remote_file_path):
+        with ftplib.FTP(self.FTP_HOST, self.FTP_USER, self.FTP_PASS) as ftp:
+            logger.debug("Connected to FTP")
+
+            file_io = io.BytesIO()
+            ftp.retrbinary(f'RETR {remote_file_path}', file_io.write)
+            file_io.seek(0)  
+
+            file_content = file_io.read().decode('utf-8')  
+            return file_content
+    
     def ensure_dir(self, ftp, file_path):
         """Ensure all directories in the file_path exist on the FTP server."""
         directories = file_path.split('/')

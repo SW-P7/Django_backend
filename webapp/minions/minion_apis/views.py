@@ -108,14 +108,16 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             logger.info("no update_log id")
             return Response("no update_log id", status=status.HTTP_400_BAD_REQUEST)
         try:
-            update_log = UpdateLogs.objects.get(id=id)
+            update_log = UpdateLogs.objects.get(id=update_log_id)
         except Exception:
             return Response("update_log not found", status=status.HTTP_404_NOT_FOUND)
         try:
-            FtpConn.download_file_ftp(f'{update_log.name}log', update_log.log_location)
+            ftp_conn = FtpConn()
+            file = ftp_conn.download_file_ftp(update_log.log_location)
+            return Response(file, status=status.HTTP_200_OK)
         except Exception:
             return Response("Error when connecting to FTP server", status.HTTP_503_SERVICE_UNAVAILABLE)
-
+        
 
     @action(detail=True, methods=['post'], url_path='upload_logs', serializer_class=None) 
     def upload_create_logs(self, request, pk=None):
