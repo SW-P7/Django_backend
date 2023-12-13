@@ -1,18 +1,24 @@
-FROM python:3.10.12
+# Use the official Python image as the base image
+FROM python:3.9
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-COPY ./webapp/requirements.txt requirements.txt
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the requirements file to the working directory
+COPY webapp/requirements.txt /app/
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . code
-WORKDIR /code
+# Copy the entire project directory into the container
+COPY . /app/
 
+# Expose the port that the Django app runs on
 EXPOSE 8000
 
-#ENTRYPOINT ["python", "webapp/webapp/manage.py"]
-#CMD ["runserver", "0.0.0.0:8000"]
-# Copy uwsgi.ini file
-COPY uwsgi.ini /etc/uwsgi/
-
-# The command to run uWSGI
-CMD ["uwsgi", "--ini", "/etc/uwsgi/uwsgi.ini"]
+# Run the Django development server
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
