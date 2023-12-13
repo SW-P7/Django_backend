@@ -23,4 +23,5 @@ class UpdateSerializer(serializers.Serializer):
 
 class UpdateLogSerializer(serializers.Serializer):
     device_id = serializers.UUIDField()
+
     

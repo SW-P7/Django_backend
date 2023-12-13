@@ -16,9 +16,9 @@ class Device(models.Model):
 
     
 class UpdateLogs(models.Model):
-    id = models.UUIDField(name='id', null=False, unique=True, primary_key=True, default=uuid.uuid4())
+    id = models.UUIDField(name='id', null=False, unique=True, primary_key=True, default=uuid.uuid4)
     device = models.ForeignKey(Device, on_delete=models.PROTECT, default=None)
-    log_location = models.CharField(name='update log', null=False, default="/home/user/logs")
+    log_location = models.CharField(null=False, default="/home/user/logs")
     name = models.CharField(name="name", null=False, default="gib name plzz")
      
     class Meta:
