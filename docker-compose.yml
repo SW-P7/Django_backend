@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  web:
+  djangoweb:
     build: .
     volumes:
       - /home/martinmortensen/Documents/AAU/7. Semester/Project/backend_code/webapp:/app/data
@@ -14,7 +14,7 @@ services:
          sh -c "python manage.py makemigrations states --no-input &&
          python manage.py makemigrations minions --no-input &&
          python manage.py migrate &&
-         uwsgi --ini ./uwsgi.ini"
+         python manage.py runserver 0.0.0.0:8000"
 
     depends_on:
       - db
