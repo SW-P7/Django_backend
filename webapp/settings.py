@@ -88,6 +88,13 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'webapp.minions.ftp_conn':{
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+
+            }
+
 
     },
 }
