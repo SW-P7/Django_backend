@@ -23,8 +23,8 @@ EXPOSE 8000
 
 COPY uwsgi.ini /etc/uwsgi/
 # Run the Django development server
-CMD ["uwsgi", "--ini", "/etc/uwsgi/uwsgi.ini"]
+#CMD ["uwsgi", "--ini", "/etc/uwsgi/uwsgi.ini"]
 
-#CMD ["python", "manage.py" "runserver"]
+CMD ["python", "manage.py" "runserver"]
 
 

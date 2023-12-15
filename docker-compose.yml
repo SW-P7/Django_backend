@@ -14,8 +14,8 @@ services:
          sh -c "python manage.py makemigrations states --no-input &&
          python manage.py makemigrations minions --no-input &&
          python manage.py migrate &&
-         uwsgi --ini ./uwsgi.ini"
-      #python manage.py runserver 0.0.0.0:8000"
+         python manage.py runserver 0.0.0.0:8000"
+        #uwsgi --ini ./uwsgi.ini"
 
     depends_on:
       - db
