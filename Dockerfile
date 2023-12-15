@@ -1,5 +1,5 @@
 # Use the official Python image as the base image
-FROM python:3.9
+FROM python:3.10.12
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -21,5 +21,10 @@ COPY . /app/
 # Expose the port that the Django app runs on
 EXPOSE 8000
 
+COPY uwsgi.ini /etc/uwsgi/
 # Run the Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["uwsgi", "--ini", "/etc/uwsgi/uwsgi.ini"]
+
+#CMD ["python", "manage.py" "runserver"]
+
+

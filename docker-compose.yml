@@ -4,7 +4,7 @@ services:
   djangoweb:
     build: .
     volumes:
-      - /home/martinmortensen/Documents/AAU/7. Semester/Project/backend_code/webapp:/app/data
+      - ./webapp:/app/data
       - .:/code:default
 
     ports:
@@ -14,7 +14,8 @@ services:
          sh -c "python manage.py makemigrations states --no-input &&
          python manage.py makemigrations minions --no-input &&
          python manage.py migrate &&
-         python manage.py runserver 0.0.0.0:8000"
+         uwsgi --ini ./uwsgi.ini"
+      #python manage.py runserver 0.0.0.0:8000"
 
     depends_on:
       - db

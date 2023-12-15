@@ -48,7 +48,7 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         return Response(status = 500)
 
     @action(detail=True, methods=['post'], url_path='send_update', serializer_class=UpdateSerializer)
-    def send_update(self, request, pk=None):        
+    def send_update(self, request, pk=None):       
         serializer = UpdateSerializer(data=request.data)
         if not serializer.is_valid():
             logger.warning("data is not valid UUID")
@@ -59,19 +59,21 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
         update_dict = {}
         for id in device_id:
             device = Device.objects.get(id=id)
+            conn = None
             try:
                 conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
                 logger.debug(device.ip_addr)
                 for uid in update_id:
-                    update = SoftwareState.objects.get(id=uid)
+                    update = SoftwareState.objects.filter(id=uid).first()
                     conn.request("POST", "/update", body=update.state ,headers={"Host": device.ip_addr, "Name": update.name})
-                    if conn.getresponse().getcode() == 200:
+                    res = conn.getresponse()
+                    if res.status == 200:
                         logger.info(f"success update request to device {device_id} with update {update_id}")
                         if "success" not in update_dict:
                             update_dict.update({"success": [{id : uid}]})
-                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get())
+                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=update)
                         else:
-                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=SoftwareState.objects.get()) 
+                            Update.objects.create(id=uuid4(), device=Device.objects.get(id=id), softwarestate=update) 
                             update_dict["success"].append({id : uid})
                     else:
                         logger.warning(f"unsuccessfull update request to device {device_id}, with update {update_id}")
@@ -80,9 +82,11 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
                         else:
                             update_dict["failure"].append({id : uid})
             except Exception as e:
-                return Response(e.__str__(), status=status.HTTP_504_GATEWAY_TIMEOUT)
+                logger.debug(e.__str__())
             finally:
-                conn.close()
+                if conn:
+                    logger.debug("LOG: Update request finished, closing connection")
+                    conn.close()
         return Response(str(update_dict), status=status.HTTP_200_OK)
 
     
