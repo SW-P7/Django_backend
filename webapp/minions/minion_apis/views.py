@@ -177,8 +177,8 @@ def ping_device(device: Device):
     time_before = time.time()
     try:
         conn.request("GET", "/ping", headers={"Host": device.ip_addr})
-        ping = round((time.time() - time_before) * 1000)
         if conn.getresponse().getcode() == 200:
+            ping = round((time.time() - time_before) * 1000)
             device.last_online = timezone.now()
             device.ping = ping
             device.save()
