@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 from rest_framework import generics, viewsets, mixins, request, status
 from rest_framework.schemas.coreapi import serializers
+from yaml import serialize
 from webapp.states.models import Update
 
 from webapp.decorators import register_viewset
@@ -104,6 +105,28 @@ class DeviceViewSet(viewsets.ModelViewSet, mixins.CreateModelMixin):
             return Response(data=upload_logs, status=status.HTTP_200_OK)
         except Exception:
             return Response("upload_logs not found", status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=True, methods=['get'], url_path='update_status', serializer_class=None)
+    def get_update_status(self, request, pk=None):
+        device_id = request.query_params.get("device_id")
+        if not device_id:
+            logger.info("no device id")
+            return Response("no device id", status=status.HTTP_400_BAD_REQUEST)
+        try:
+            device = Device.objects.filter(id=device_id).first()
+        except Exception as e:
+            return Response(f"not a correct device id {str(e)}", status=status.HTTP_404_NOT_FOUND)
+        try:
+            conn = http.client.HTTPConnection(device.ip_addr, 5000, timeout=10)
+            conn.request("GET", "/status", headers={"Host": device.ip_addr})
+            res = conn.getresponse()
+            res = res.read().decode()
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception:
+            return Response("Connection Timeout", status=status.HTTP_504_GATEWAY_TIMEOUT)
+
+
+
 
     @action(detail=True, methods=['get'], url_path='update_log', serializer_class=None)
     def get_log(self, request, pk=None): 
